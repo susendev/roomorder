@@ -1,7 +1,15 @@
+//
+//  RoomController.swift
+//  
+//
+//  Created by yigua on 2022/4/8.
+//
+
+import Foundation
 import Fluent
 import Vapor
 
-struct TodoController: RouteCollection {
+struct RoomController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let todos = routes.grouped("todos")
         todos.get(use: index)

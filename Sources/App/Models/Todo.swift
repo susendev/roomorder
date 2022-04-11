@@ -6,9 +6,17 @@ final class Todo: Model, Content {
     
     @ID(key: .id)
     var id: UUID?
+//    @ID(custom: "id", generatedBy: .user)
+//    var id: String?
 
     @Field(key: "title")
     var title: String
+
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
 
     init() { }
 
@@ -16,4 +24,5 @@ final class Todo: Model, Content {
         self.id = id
         self.title = title
     }
+    
 }

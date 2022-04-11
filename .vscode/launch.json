@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Run",
+            "program": "${workspaceFolder:roomorder}/.build/debug/Run",
+            "args": [],
+            "cwd": "${workspaceFolder:roomorder}",
+            "preLaunchTask": "swift: Build Debug Run"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Release Run",
+            "program": "${workspaceFolder:roomorder}/.build/release/Run",
+            "args": [],
+            "cwd": "${workspaceFolder:roomorder}",
+            "preLaunchTask": "swift: Build Release Run"
+        }
+    ]
+}
