@@ -51,3 +51,28 @@ final class Room: Model, Content {
     }
     
 }
+
+struct RoomResponse: Content {
+    
+    var id: UUID?
+
+    var name: String
+    
+    var address: String
+    
+    var seats: Int
+    
+    var scheduledSeats: Int
+    
+    var unScheduledSeats: Int
+
+    init(with user: Room) {
+        self.id = user.id
+        self.name = user.name
+        self.address = user.address
+        self.seats = user.seats
+        self.scheduledSeats = user.scheduledSeats
+        self.unScheduledSeats = user.seats - user.scheduledSeats
+    }
+    
+}

@@ -11,37 +11,44 @@ import Vapor
 
 struct RoomController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let todos = routes.grouped("todos")
-        todos.get(use: index)
-        todos.post(use: create)
-        todos.group(":todoID") { todo in
-            todo.delete(use: delete)
-            todo.get(use: getIndex)
+        let rooms = routes.grouped("rooms")
+        rooms.get(use: all)
+        rooms.post(use: create)
+        rooms.group(":roomID") { room in
+            room.delete(use: delete)
+            room.get(use: getIndex)
         }
     }
 
-    func index(req: Request) async throws -> [Todo] {
-        try await Todo.query(on: req.db).all()
+    func all(req: Request) async throws -> MyResponse<[RoomResponse]> {
+        let rooms  = try await Room.query(on: req.db).all()
+        return MyResponse(data: rooms.map({ RoomResponse(with: $0) }))
     }
     
-    func getIndex(req: Request) async throws -> Todo {
-        guard let todo = try await Todo.find(req.parameters.get("todoID"), on: req.db) else {
+    func getIndex(req: Request) async throws -> Room {
+        guard let room = try await Room.find(req.parameters.get("roomID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        return todo
+        return room
     }
 
-    func create(req: Request) async throws -> Todo {
-        let todo = try req.content.decode(Todo.self)
-        try await todo.save(on: req.db)
-        return todo
+    func create(req: Request) async throws -> MyResponse<RoomResponse> {
+        let room = try req.content.decode(Room.self)
+        if let _ = try await Room.query(on: req.db)
+                .filter(\.$address == room.address)
+                .first() {
+                throw MyError(message: "已经存在改地址", code: .createRoom)
+        }
+        
+        try await room.save(on: req.db)
+        return MyResponse(data: RoomResponse(with: room))
     }
 
     func delete(req: Request) async throws -> HTTPStatus {
-        guard let todo = try await Todo.find(req.parameters.get("todoID"), on: req.db) else {
+        guard let room = try await Room.find(req.parameters.get("roomID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        try await todo.delete(on: req.db)
+        try await room.delete(on: req.db)
         return .ok
     }
 }

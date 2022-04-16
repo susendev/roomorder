@@ -109,7 +109,9 @@ public struct MyError: Error {
 
 public enum ErrorCode: Int {
     case loginError = 40001
-    case registerError = 40002
+    case registerError
+    case noUser
+    case createRoom
     case unknow = 99999
 }
 

@@ -19,7 +19,7 @@ struct UserController: RouteCollection {
 
     func userinfo(req: Request) async throws -> MyResponse<UserResponse> {
         guard let user = try await User.find(req.parameters.get("user"), on: req.db) else {
-            throw Abort(.notFound)
+            throw MyError(message: "error", code: .noUser)
         }
         return MyResponse(data: UserResponse(with: user))
     }
