@@ -19,6 +19,7 @@ struct UserController: RouteCollection {
         users.post(use: register)
 
         let user = routes.grouped("user")
+        user.post("changePassword", use: changePassword)
         try user.register(collection: LoginController())
     }
 
@@ -53,6 +54,22 @@ struct UserController: RouteCollection {
             throw MyError(message: "没有该用户", code: .noUser)
         }
         try await user.delete(on: req.db)
+        return NoDataResponse()
+    }
+    
+    func changePassword(req: Request) async throws -> NoDataResponse {
+        
+        guard let id = req.headers.first(name: "id"),
+              let user = try await User.find(UUID(uuidString: id), on: req.db) else {
+            throw MyError(message: "没有该用户", code: .noUser)
+        }
+        let old: String = try req.content.get(at: "old")
+        let new: String = try req.content.get(at: "new")
+        if old != user.password {
+            throw MyError(message: "密码错误", code: .unknow)
+        }
+        user.password = new
+        try await user.update(on: req.db)
         return NoDataResponse()
     }
 
