@@ -38,7 +38,7 @@ final class Order: Model, Content {
     var room: Room
     
     @Field(key: "scheduled_date")
-    var date: Date
+    var date: String
     
     @Field(key: "state")
     var state: OrderState
@@ -48,6 +48,42 @@ final class Order: Model, Content {
     init(id: UUID? = nil) {
         self.id = id
         self.state = .success
+    }
+    
+}
+
+struct OrderResponse: Content {
+
+    var id: UUID?
+
+    var userId: UUID?
+    
+    var userName: String?  = nil
+
+    var roomId: UUID?
+    
+    var roomName: String? = nil
+
+    var date: String
+    
+    var state: OrderState
+
+    init(order: Order, joined: Bool = false) {
+        self.id = order.id
+        self.userId = order.$user.id
+        self.roomId = order.$room.id
+
+        if joined {
+            let user = try? order.joined(User.self)
+            self.userName = user?.username
+            let room = try? order.joined(Room.self)
+            self.roomName = room?.name
+        } else {
+            self.userName = nil
+            self.roomName = nil
+        }
+        self.date = order.date
+        self.state = order.state
     }
     
 }

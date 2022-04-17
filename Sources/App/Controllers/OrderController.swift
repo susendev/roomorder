@@ -11,37 +11,63 @@ import Vapor
 
 struct OrderController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let todos = routes.grouped("todos")
-        todos.get(use: index)
-        todos.post(use: create)
-        todos.group(":todoID") { todo in
-            todo.delete(use: delete)
-            todo.get(use: getIndex)
+        let orders = routes.grouped("orders")
+        orders.get(use: index)
+        orders.post(use: create)
+        orders.group(":orderId") { item in
+            item.delete(use: delete)
+            item.get(use: getIndex)
         }
-    }
-
-    func index(req: Request) async throws -> [Todo] {
-        try await Todo.query(on: req.db).all()
     }
     
-    func getIndex(req: Request) async throws -> Todo {
-        guard let todo = try await Todo.find(req.parameters.get("todoID"), on: req.db) else {
-            throw Abort(.notFound)
+    func index(req: Request) async throws -> MyResponse<[OrderResponse]> {
+        let orders: [Order]
+        if let user = try? req.query.get(UUID.self, at: "user") {
+            orders = try await Order.query(on: req.db)
+                .join(parent: \.$room)
+                .join(parent: \.$user)
+                .filter(\.$user.$id == user).all()
+        } else {
+            orders = try await Order.query(on: req.db)
+                .join(parent: \.$room)
+                .join(parent: \.$user)
+                .all()
         }
-        return todo
+        return MyResponse.init(data: orders.map({ OrderResponse(order: $0, joined: true) }))
     }
-
-    func create(req: Request) async throws -> Todo {
-        let todo = try req.content.decode(Todo.self)
-        try await todo.save(on: req.db)
-        return todo
-    }
-
-    func delete(req: Request) async throws -> HTTPStatus {
-        guard let todo = try await Todo.find(req.parameters.get("todoID"), on: req.db) else {
-            throw Abort(.notFound)
+    
+    func getIndex(req: Request) async throws -> MyResponse<OrderResponse> {
+        guard let order = try await Order.find(req.parameters.get("orderId"), on: req.db) else {
+            throw MyError(message: "订单查找失败", code: .orderError)
         }
-        try await todo.delete(on: req.db)
-        return .ok
+        return MyResponse(data: OrderResponse(order: order))
+    }
+    
+    func create(req: Request) async throws -> MyResponse<OrderResponse> {
+        let userId = try req.content.get(UUID.self, at: "user")
+        let roomId = try req.content.get(UUID.self, at: "room")
+        let date = try req.content.get(String.self, at: "date")
+        
+        if let _ = try await Order.query(on: req.db)
+            .filter(\.$user.$id == userId)
+            .filter(\.$date == date)
+            .first() {
+            throw MyError(message: "在该日期已有预定", code: .orderError)
+        }
+        let order = Order()
+        order.$user.id = userId
+        order.$room.id = roomId
+        order.date = date
+        order.state = .success
+        try await order.save(on: req.db)
+        return MyResponse(data: OrderResponse(order: order))
+    }
+    
+    func delete(req: Request) async throws -> NoDataResponse {
+        guard let result = try await Order.find(req.parameters.get("orderId"), on: req.db) else {
+            throw MyError(message: "订单查找失败", code: .orderError)
+        }
+        try await result.delete(on: req.db)
+        return NoDataResponse()
     }
 }

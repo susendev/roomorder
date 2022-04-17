@@ -67,7 +67,7 @@ struct CreateOrder: AsyncMigration {
             .id()
             .field("user_id", .uuid, .required, .references(User.schema, .id))
             .field("room_id", .uuid, .required, .references(Room.schema, .id))
-            .field("scheduled_date", .date, .required)
+            .field("scheduled_date", .string, .required)
             .field("state", .string, .required)
             .field("created_at", .datetime, .required)
             .field("updated_at", .datetime)

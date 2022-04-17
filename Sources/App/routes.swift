@@ -5,5 +5,6 @@ func routes(_ app: Application) throws {
 
     try app.register(collection: UserController())
     try app.register(collection: RoomController())
+    try app.register(collection: OrderController())
     
 }
