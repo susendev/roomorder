@@ -17,6 +17,7 @@ struct RoomController: RouteCollection {
         rooms.group(":roomID") { room in
             room.delete(use: delete)
             room.get(use: getIndex)
+            room.put(use: put)
         }
     }
 
@@ -25,11 +26,11 @@ struct RoomController: RouteCollection {
         return MyResponse(data: rooms.map({ RoomResponse(with: $0) }))
     }
     
-    func getIndex(req: Request) async throws -> Room {
+    func getIndex(req: Request) async throws -> MyResponse<RoomResponse> {
         guard let room = try await Room.find(req.parameters.get("roomID"), on: req.db) else {
-            throw Abort(.notFound)
+            throw MyError(message: "没有该教室", code: .noRoom)
         }
-        return room
+        return MyResponse(data: RoomResponse(with: room))
     }
 
     func create(req: Request) async throws -> MyResponse<RoomResponse> {
@@ -44,11 +45,28 @@ struct RoomController: RouteCollection {
         return MyResponse(data: RoomResponse(with: room))
     }
 
-    func delete(req: Request) async throws -> HTTPStatus {
+    func delete(req: Request) async throws -> NoDataResponse {
         guard let room = try await Room.find(req.parameters.get("roomID"), on: req.db) else {
-            throw Abort(.notFound)
+            throw MyError(message: "没有该教室", code: .noRoom)
         }
         try await room.delete(on: req.db)
-        return .ok
+        return NoDataResponse()
+    }
+    
+    func put(req: Request) async throws -> MyResponse<RoomResponse> {
+        guard let room = try await Room.find(req.parameters.get("roomID"), on: req.db) else {
+            throw MyError(message: "没有该教室", code: .noRoom)
+        }
+        if let name = try? req.content.get(String.self, at: "name") {
+            room.name = name
+        }
+        if let address = try? req.content.get(String.self, at: "address") {
+            room.address = address
+        }
+        if let seats = try? req.content.get(Int.self, at: "seats") {
+            room.seats = seats
+        }
+        try await room.update(on: req.db)
+        return MyResponse(data: RoomResponse(with: room))
     }
 }

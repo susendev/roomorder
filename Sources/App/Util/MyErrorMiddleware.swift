@@ -112,6 +112,7 @@ public enum ErrorCode: Int {
     case registerError
     case noUser
     case createRoom
+    case noRoom
     case unknow = 99999
 }
 

@@ -16,3 +16,11 @@ struct MyResponse<T: Content>: Content {
     let data: T
     
 }
+
+struct NoDataResponse: Content {
+    
+    var code = 20000
+    
+    var message = "ok"
+    
+}
